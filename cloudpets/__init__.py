@@ -1,4 +1,5 @@
 from __future__ import print_function
+from datetime import datetime
 
 from bluetooth.ble import GATTRequester
 
@@ -21,6 +22,14 @@ HANDLES = {
     'led': 0x0027,
     'volume': 0x002a
 }
+
+MODELS = [
+    'Bentley the Bear',
+    'Charley the Cat',
+    'Diesel the Dog',
+    'Bubbles the Bunny',
+    'Starburst the Unicorn'
+]
 
 
 class Led(object):
@@ -75,9 +84,12 @@ class Cloudpets(object):
         self.speaker = Speaker(self)
         self.microphone = Microphone(self)
         self.state = None
+        self.name = None
+        self.setup_datetime = None
 
     def connect(self):
         self._requester.connect(True)
+        self._retrieve_config()
 
     def disconnect(self):
         self._requester.disconnect()
@@ -87,3 +99,8 @@ class Cloudpets(object):
 
     def _send_command(self, handle, cmd):
         self._requester.write_by_handle(handle, str(bytearray(cmd)))
+
+    def _retrieve_config(self):
+        response = self._read_value(HANDLES['config'])[0]
+        self.name = MODELS[int(response[:2])]
+        self.setup_datetime = datetime.strptime(response[2:], "%m_%d_%H_%M_%S")
